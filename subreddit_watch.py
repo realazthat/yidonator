@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import praw
 import time
 import requests
