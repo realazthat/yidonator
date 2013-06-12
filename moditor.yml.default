@@ -1,0 +1,7 @@
+user_agent: "Moditor 0.1 by /u/realz-slaw"
+reddit_user: # mod account user name
+reddit_pwd: # mod account password
+notify_users: [  ] # users to notify
+#subreddit: # subreddit to monitor
+loop_time: 10
+control_page: # wiki page to look for rules

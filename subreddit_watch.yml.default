@@ -1,0 +1,8 @@
+user_agent: "Post Feed Monitor 0.1 by /u/realz-slaw"
+reddit_user: none #fill this in
+reddit_pwd: none #fill this in
+words: [ 'it', 'the', 'a', 'b' ] # Words to watch for
+notify_users: [    ] # Users to pm
+subreddit: funny
+loop_time: 30
+
