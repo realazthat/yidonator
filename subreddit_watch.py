@@ -113,32 +113,6 @@ def main():
     
     main_context['config'] = config
     
-    """
-    db_conn = sqlite3.connect(config['db_path'])
-    main_context['db_conn'] = db_conn
-    
-    c = db_conn.cursor()
-    
-    try:
-        # Create table
-        c.execute('''CREATE TABLE posts
-                     (postid INTEGER PRIMARY KEY AUTOINCREMENT,
-                      created_utc integer,
-                      reddit_id text)''')
-        db_conn.commit()
-    except sqlite3.OperationalError as e:
-        print 'sqlite3.OperationalError:',e
-    
-    
-    
-    def get_before():
-        c.execute('''SELECT reddit_id FROM posts ORDER BY created_utc DESC LIMIT 1''')
-        
-        result = c.fetchall()
-        if len(result) > 0:
-            return result[0]
-        return None
-    """
     
     
     user_agent = config['user_agent']
@@ -150,7 +124,6 @@ def main():
     r = praw.Reddit(user_agent=user_agent)
     r.login(config['reddit_user'],config['reddit_pwd'])
     
-    #subreddit = r.get_subreddit('gaming')
     
     words = config['words']
     
@@ -182,7 +155,7 @@ def main():
                 service()
             except Exception as e:
                 
-                print >> sys.stderr, 'Exception during new_post_cb():',e
+                print >> sys.stderr, 'Exception during service():',e
                 traceback.print_exc(file=sys.stderr)            
         
         time.sleep(loop_time)

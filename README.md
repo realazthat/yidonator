@@ -1,3 +1,4 @@
+####Required Libraries
 
-
-# Edited with Vim :)
+* PRAW
+* pyyaml
