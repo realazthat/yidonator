@@ -17,16 +17,9 @@ def collect_flair_from_api_page(api_page):
         flair = user['flair_text']
         if flair != None:
             flair_list.append(flair)
+        else:
+            flair_list.append('')
     return flair_list
-
-def fetch_full_flair_list(subreddit):
-    page_of_flair = fetch_page_of_flair(subreddit)
-    flair_list = []
-
-    while 'next' in page_of_flair:
-        flair_list += collect_flair_from_api_page(page_of_flair)
-        page_of_flair = fetch_page_of_flair(subreddit, after=page_of_flair['next'])
-        
 
 def flair_counts(list_of_flair):
     flair_count_dictionary = {}
