@@ -1,50 +1,74 @@
 #! /usr/bin/env python
 
-import praw
-import yaml
-import argparse
+import requests
 
-class FlairCollector:
+def fetch_page_of_flair(subreddit, after=None, limit=500):
+    parameters = {'limit': limit}
+    if after != None: parameters['after']=after
 
-	def __init__(self, r, subreddit):
-		self.r = r
-		self.subreddit = subreddit
+    url = "http://reddit.com/r/{subreddit}/api/flairlist.json".format(subreddit = subreddit)
 
-	def get_flair_counts(self):
-		flair_count_dict = {}
-		flair_list = self.subreddit.get_flair_list()
-		for item in flair_list:
-			f = item['flair_text']
-        	        if f in flair_count_dict.keys():
-				current_count = flair_count_dict[f]
-			else: current_count = 0
-			flair_count_dict[f] = current_count + 1
-		return flair_count_dict
+    data = requests.get(url, params = parameters)
+    return data.json() # a dictionary ('previous', 'users', 'next')
 
-def main():
-	parser = argparse.ArgumentParser(add_help=True)
-	parser.add_argument('config', type=argparse.FileType('r'), help="configuration_file")
-	parsed_args = parser.parse_args()
-	config_file = parsed_args.config
+def collect_flair_from_api_page(api_page):
+    flair_list = []
+    for user in api_page['users']:
+        flair = user['flair_text']
+        if flair != None:
+            flair_list.append(flair)
+    return flair_list
 
-	try:
-		config = yaml.load(config_file)
-	except:
-		print >> sys.stderr, '\nError: parsing configuration\n'
-		raise
+def fetch_full_flair_list(subreddit):
+    page_of_flair = fetch_page_of_flair(subreddit)
+    flair_list = []
 
-	user_agent = config['user_agent']
-	loop_time = config['loop_time']
-	limit_per_query = 50
+    while 'next' in page_of_flair:
+        flair_list += collect_flair_from_api_page(page_of_flair)
+        page_of_flair = fetch_page_of_flair(subreddit, after=page_of_flair['next'])
+        
 
-	r = praw.Reddit(user_agent=user_agent)
-	r.login(config['reddit_user'], config['reddit_pwd'])
+def flair_counts(list_of_flair):
+    flair_count_dictionary = {}
 
-	subreddit = r.get_subreddit(config['subreddit'])
-	
-	flair_collector = FlairCollector(r, subreddit)
-	flairs = flair_collector.get_flair_counts()
-	print len(flairs)
+    for flair in list_of_flair:
+        if flair in flair_count_dictionary:
+            flair_count = flair_count_dictionary[flair]
+        else:
+            flair_count = 0
+
+        flair_count_dictionary[flair] = flair_count + 1
+
+    return flair_count_dictionary
+
+def add_flair_dictionaries(dictionary_1, dictionary_2):
+    for key in dictionary_2:
+        if key in dictionary_1:
+            dictionary_1[key] += dictionary_2[key]
+        else:
+            dictionary_1[key] = dictionary_2[key]
+
+def full_subreddit_flair_count(subreddit):
+    flair_count_dictionary = {}
+
+    page_of_flair = fetch_page_of_flair(subreddit)
+
+    while 'next' in page_of_flair:
+        flair_list = collect_flair_from_api_page(page_of_flair)
+
+        new_flair_dictionary = flair_counts(flair_list)
+        add_flair_dictionaries(flair_count_dictionary, new_flair_dictionary)
+
+        page_of_flair = fetch_page_of_flair(subreddit, after=page_of_flair['next'])
+
+    return flair_count_dictionary
+
 
 if __name__ == "__main__":
-	main()
+    from sys import argv as arguments
+    if len(arguments) < 2:
+        print "Too few arguments; requires subreddit"
+    else:
+        from pprint import pprint
+        pprint(full_subreddit_flair_count(arguments[1]))
+
