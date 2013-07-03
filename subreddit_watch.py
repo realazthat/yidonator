@@ -1,16 +1,21 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-import praw
-import time
-import requests
-import json
+# built-in modules
 import re
-import sys,traceback
-
+import sys
+import json
+import time
+import traceback
 from pprint import pprint
 
-from tool_utils import shorten_url, unescape_entities
+# http://python-requests.org
+import requests
 
+# https://github.com/praw-dev/praw
+import praw
+
+# local modules
+from tool_utils import shorten_url, unescape_entities
 from reddit_tools.new_post_monitor import NewPostMonitor
 from reddit_tools.new_comment_monitor import NewCommentMonitor 
 
@@ -43,12 +48,9 @@ class Collector:
         
         regex = self.regex
         
-        
         self.post_count += 1
     
         permalink = 'http://www.reddit.com{permalink}'.format(permalink=unescape_entities(jpost['data']['permalink']).encode('utf-8'))
-        
-        
         
         domain = unescape_entities(jpost['data']['domain'])
         url = unescape_entities(jpost['data']['url'])
@@ -65,12 +67,11 @@ class Collector:
             permalink = permalink.encode('utf-8')
             
             self.results += ['* **{title}**\n\n \\[[link]({permalink})\\]'.format(title=title,permalink=permalink)]
+            
     def collect_comment(self,jpost):
         pass
-    def run(self):
-        
-
-        
+    
+    def run(self):    
         print >> sys.stderr, 'processed {n} posts with {m} positive results.'.format(n=self.post_count, m=len(self.results))
         if len(self.results) != 0:
             message = '\n'.join(self.results)
@@ -158,12 +159,9 @@ def main():
                 traceback.print_exc(file=sys.stderr)            
         
         time.sleep(loop_time)
-        
-    
-    
+
     
     
     
 if __name__ == "__main__":
     main()
-
