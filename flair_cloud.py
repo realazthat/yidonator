@@ -26,7 +26,7 @@ def flair_counts(list_of_flair):
         to the number of times each flair appears in the list."""
 
     flair_count_dictionary = {}
-    
+
     for flair in list_of_flair:
         if flair in flair_count_dictionary:
             flair_count = flair_count_dictionary[flair]
