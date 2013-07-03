@@ -1,16 +1,21 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-import praw
-import time
-import requests
-import json
+# built-in modules
 import re
-import sys,traceback
-
+import sys
+import json
+import time
+import traceback
 from pprint import pprint
 
-from tool_utils import shorten_url, unescape_entities
+# http://python-requests.org
+import requests
 
+# https://github.com/praw-dev/praw
+import praw
+
+# local modules
+from tool_utils import shorten_url, unescape_entities
 from reddit_tools.new_post_monitor import NewPostMonitor
 from reddit_tools.new_comment_monitor import NewCommentMonitor 
 
@@ -43,12 +48,9 @@ class Collector:
         
         regex = self.regex
         
-        
         self.post_count += 1
     
         permalink = 'http://www.reddit.com{permalink}'.format(permalink=unescape_entities(jpost['data']['permalink']).encode('utf-8'))
-        
-        
         
         domain = unescape_entities(jpost['data']['domain'])
         url = unescape_entities(jpost['data']['url'])
@@ -65,12 +67,11 @@ class Collector:
             permalink = permalink.encode('utf-8')
             
             self.results += ['* **{title}**\n\n \\[[link]({permalink})\\]'.format(title=title,permalink=permalink)]
+            
     def collect_comment(self,jpost):
         pass
-    def run(self):
-        
-
-        
+    
+    def run(self):    
         print >> sys.stderr, 'processed {n} posts with {m} positive results.'.format(n=self.post_count, m=len(self.results))
         if len(self.results) != 0:
             message = '\n'.join(self.results)
@@ -112,32 +113,6 @@ def main():
     
     main_context['config'] = config
     
-    """
-    db_conn = sqlite3.connect(config['db_path'])
-    main_context['db_conn'] = db_conn
-    
-    c = db_conn.cursor()
-    
-    try:
-        # Create table
-        c.execute('''CREATE TABLE posts
-                     (postid INTEGER PRIMARY KEY AUTOINCREMENT,
-                      created_utc integer,
-                      reddit_id text)''')
-        db_conn.commit()
-    except sqlite3.OperationalError as e:
-        print 'sqlite3.OperationalError:',e
-    
-    
-    
-    def get_before():
-        c.execute('''SELECT reddit_id FROM posts ORDER BY created_utc DESC LIMIT 1''')
-        
-        result = c.fetchall()
-        if len(result) > 0:
-            return result[0]
-        return None
-    """
     
     
     user_agent = config['user_agent']
@@ -149,7 +124,6 @@ def main():
     r = praw.Reddit(user_agent=user_agent)
     r.login(config['reddit_user'],config['reddit_pwd'])
     
-    #subreddit = r.get_subreddit('gaming')
     
     words = config['words']
     
@@ -181,16 +155,13 @@ def main():
                 service()
             except Exception as e:
                 
-                print >> sys.stderr, 'Exception during new_post_cb():',e
+                print >> sys.stderr, 'Exception during service():',e
                 traceback.print_exc(file=sys.stderr)            
         
         time.sleep(loop_time)
-        
-    
-    
+
     
     
     
 if __name__ == "__main__":
     main()
-
