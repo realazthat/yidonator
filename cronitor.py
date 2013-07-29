@@ -8,30 +8,63 @@ import datetime
 import argparse
 import sys,traceback
 from pprint import pprint
+import textwrap
+
 
 import yaml
 import asteval
 
 
+from tool_utils import unescape_entities
 
 def fire_action(event,subreddit,variables):
     if 'post' in event:
         title = event['post']['title']
         text = event['post']['text']
-        title = time.strftime(title.format(**variables))
-        text = time.strftime(text.format(**variables))
+        title = title.format(**variables)
+        text = text.format(**variables)
         subreddit.submit(title=title,text=text)
         
         print
         print 'sending'
         print
 
+def generate_help_string():
+    help_string_lines = [
+        'Condition is a python-ish expression. You can use {VARIABLE} to test against preset values.',
+        'Variables that are available are python\'s time formatting options.',
+        'http://docs.python.org/2/library/time.html#time.strftime for time formatting options.',
+        'So, for the minutes of the current hour, one could use {M}.',
+        'Condition should match a range of time. The bot will fire the action when the condition changes state,\
+          ie. it does not match on one run, and then it does match on the next run.',
+        'If the condition matches for a short time, ie. it is shorter than the cron-time of the bot, it can be missed,\
+          and other Bad Things can occur.',
+        'Variables can be used in the title and text fields as well.',
+        'Errors will fail silently, emitting an error in the bot logs.'
+        ]
+
+
+    
+    result = []
+    for help_string_line in help_string_lines:
+        help_string_line = ' '.join(help_string_line.split('\n'))
+        help_string_line = ' '.join(help_string_line.split())
+        help_string_line = textwrap.wrap(help_string_line,70)
+        result += ['\n  '.join(help_string_line)]
+    
+    return '\n'.join(result)
+
 def main():
     
-    parser = argparse.ArgumentParser(add_help=True)
+    #print generate_help_string()
+    #exit()
+    
+    parser = argparse.ArgumentParser(add_help=True,epilog=generate_help_string())
     parser.add_argument('config', type=argparse.FileType('r'),help="configuration file")
+    #parser.add_argument('--rules-usage', action='store_true')
 
     parsed_args = parser.parse_args()
+
 
     config_file = parsed_args.config
 
@@ -99,18 +132,17 @@ def main():
         assert next_run - last_run == cron_time
         
         try:
-            wiki_control_page = subreddit.get_wiki_page(control_page_name)
-            wiki_config_data = wiki_control_page.content_md
             
-            
-            wiki_config_data = \
-'''
+            wiki_config_data = '''
 ---
     condition: "{M} % 2 == 0"
     post: 
         title: Even Minute Test, {M}
         text: Test text
 ---'''
+            
+            wiki_control_page = subreddit.get_wiki_page(control_page_name)
+            wiki_config_data = unescape_entities(wiki_control_page.content_md)
             
             
             events = yaml.load_all(wiki_config_data)
@@ -126,9 +158,16 @@ def main():
             strftime_format_strings = ['a','A','b','B', 'c','d','H','I',
                 'j','m','M','p','S','U','w','W','x','X','y','Y','Z']
             for format_string in strftime_format_strings:
-                variables[format_string] = time.strftime(
+                value = time.strftime(
                     '%{format_string}'.format(format_string=format_string),
                     current_gmtime)
+                
+                variables[format_string] = value
+                
+                try:
+                    variables[format_string] = int(variables[format_string])
+                except ValueError:
+                    continue
             
             aeval = asteval.Interpreter()
             
@@ -137,6 +176,11 @@ def main():
                 try:
                     if event is None:
                         continue
+                    if not isinstance(event,(dict,)):
+                        continue
+                    if 'condition' not in event:
+                        continue
+                    
                     
                     event_str = str(event)
                     
@@ -153,12 +197,13 @@ def main():
                     #print 'event_state0:',event_state0
                     
                     condition = event['condition']
-                    condition = condition.format(**variables)
-                    #condition = time.strftime(condition, current_gmtime)
+                    
+                    formated_condition = condition.format(**variables)
                     
                     aeval.symtable = variables
-                    event_state1 = aeval(condition)
-                    #print '({condition})   ====>   {event_state1}'.format(condition=condition,event_state1=event_state1)
+                    event_state1 = aeval(formated_condition)
+                    print '({condition})   ====>   {event_state1}'.format(condition=formated_condition,
+                                                                          event_state1=event_state1)
 
                     event_states[event_str] = event_state1
                     
