@@ -1,0 +1,6 @@
+user_agent: "Cronitor 0.1 by /u/realz-slaw"
+reddit_user: USERNAME               #reddit account login name
+reddit_pwd: PASSWORD                #reddit account login password
+subreddit: SUBREDDITTOMONITOR       #subreddit to monitor for rules
+cron_time: SECONDSTOLOOP            #loop time, in seconds
+control_page: cronitor              #wikipage to get rules from

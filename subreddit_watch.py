@@ -19,6 +19,11 @@ from tool_utils import shorten_url, unescape_entities
 from reddit_tools.new_post_monitor import NewPostMonitor
 from reddit_tools.new_comment_monitor import NewCommentMonitor 
 
+
+
+import yaml
+import argparse
+
 def reddit_format_escape(unformatted_text):
     result = []
     
@@ -88,9 +93,6 @@ class Collector:
 
 def main():
     
-    import yaml
-    
-    import argparse
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('config', type=argparse.FileType('r'),help="configuration file")
 
@@ -98,7 +100,7 @@ def main():
 
     config_file = parsed_args.config
 
-    #config = {}
+    config = {}
 
     try:
         config = yaml.load(config_file)

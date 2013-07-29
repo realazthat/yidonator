@@ -16,6 +16,10 @@ from tool_utils import shorten_url, unescape_entities
 from reddit_tools.new_post_monitor import NewPostMonitor
 from reddit_tools.new_comment_monitor import NewCommentMonitor 
 
+
+import yaml
+import argparse
+
 def reddit_format_escape(unformatted_text):
     result = []
     
@@ -661,9 +665,6 @@ def parse_rules(rule_configs,subreddit):
 
 def main():
     
-    import yaml
-    
-    import argparse
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument('config', type=argparse.FileType('r'),help="configuration file")
 
@@ -671,7 +672,7 @@ def main():
 
     config_file = parsed_args.config
 
-    #config = {}
+    config = {}
 
     try:
         config = yaml.load(config_file)
@@ -691,8 +692,6 @@ def main():
     user_agent = config['user_agent']
     loop_time = config['loop_time']
     limit_per_query = 50
-    user_agent = config['user_agent']
-    #subreddit = config['subreddit']
     control_page_name = config['control_page']
     
     r = praw.Reddit(user_agent=user_agent)
@@ -710,6 +709,7 @@ def main():
         
         contributors = set([])
         
+        #If my account is a moderator, get the contributor list (only moderators can do that)
         if config['reddit_user'] in moderators:
             contributors = subreddit.get_contributors()
             contributors = set([contributor.name for contributor in contributors])
@@ -717,6 +717,8 @@ def main():
         
         #wiki_control_page = subreddit.get_wiki_page(control_page_name)
         #wiki_config_data = wiki_control_page.content_md
+        
+        #TODO check that the wiki page is closed to public, and throw error if it is not.
         
         wiki_config_data = \
 '''
@@ -740,13 +742,16 @@ def main():
             
             print
             pprint(rule)
-            
+        
+        
+        
+        
         #exit()
     
         
         
-        new_comment_monitor = NewCommentMonitor(subreddit, limit_per_query, user_agent)
-        new_post_monitor = NewPostMonitor(subreddit, limit_per_query, user_agent)
+        new_comment_monitor = NewCommentMonitor(config['subreddit'], limit_per_query, user_agent)
+        new_post_monitor = NewPostMonitor(config['subreddit'], limit_per_query, user_agent)
         
         collector = Collector(r, subreddit, rules, contributors, moderators)
         

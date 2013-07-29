@@ -2,3 +2,8 @@
 
 * PRAW
 * pyyaml
+
+
+
+* asteval
+* astral
