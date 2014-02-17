@@ -48,11 +48,10 @@ def fire_action(event,subreddit,variables):
         
         print 'title:',title,'text:',text
         
+        submission = subreddit.submit(title=title,text=text,url=url)
+        submission.distinguish()
         if sticky:
-            
-            subreddit.submit(title=title,text=text,url=url).distinguish().sticky()
-        else:
-            subreddit.submit(title=title,text=text,url=url).distinguish()
+            submission.sticky()
         
         
         print
