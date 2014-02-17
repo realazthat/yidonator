@@ -31,6 +31,7 @@ def fire_action(event,subreddit,variables):
         
         text = post['text'] if 'text' in post else None
         url = post['url'] if 'url' in post else None
+        sticky = post['sticky'] if 'sticky' in post else False
         
         
         text = unescape_entities(text).format(**variables) if text is not None else None
@@ -46,7 +47,12 @@ def fire_action(event,subreddit,variables):
             text = ' '
         
         print 'title:',title,'text:',text
-        subreddit.submit(title=title,text=text,url=url).distinguish()
+        
+        if sticky:
+            
+            subreddit.submit(title=title,text=text,url=url).distinguish().sticky()
+        else:
+            subreddit.submit(title=title,text=text,url=url).distinguish()
         
         
         print
@@ -151,12 +157,21 @@ def main():
     #                  for line in generate_help_string().split('\n')])
     #exit()
     
-    parser = argparse.ArgumentParser(add_help=True,epilog=generate_help_string())
-    parser.add_argument('config', type=argparse.FileType('r'),help="configuration file")
-    #parser.add_argument('--rules-usage', action='store_true')
+    parser = argparse.ArgumentParser(add_help=True)
+    
+    
+    group = parser.add_mutually_exclusive_group(required=True)
+    
+    group.add_argument('--rules-usage', action='store_true')
+    group.add_argument('config', type=argparse.FileType('r'),help="configuration file",nargs='?')
 
     parsed_args = parser.parse_args()
 
+
+    if parsed_args.rules_usage:
+        print '\n'.join([ '  * ' + line if len(line) > 0 and line[0] != ' ' else '    ' + line
+                           for line in generate_help_string().split('\n')])
+        exit()
 
     config_file = parsed_args.config
 
